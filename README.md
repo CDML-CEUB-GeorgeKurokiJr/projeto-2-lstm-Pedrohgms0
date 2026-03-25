@@ -12,10 +12,16 @@
 
 <br>
 
-Treinado com dados de 2010–2019 e avaliado em 2023–2025 com comparação out-of-sample  
-contra buy & hold e análise de robustez com **50 seeds independentes**.
+Treinado com dados de 2010–2019 e avaliado out-of-sample em 2023–2025 contra buy & hold,  
+com análise de robustez em **50 seeds independentes**.
 
 </div>
+
+---
+
+## Hipótese de trabalho
+
+A modelagem conjunta de ativos correlacionados verticalmente na cadeia de exploração de petróleo — combinada com features técnicas, macroeconômicas e função de perda híbrida — permite capturar relações não-lineares que uma estratégia passiva (buy & hold) não explora. A hipótese operacional é que o modelo gera alpha estatisticamente positivo em período out-of-sample estritamente separado do treino.
 
 ---
 
@@ -32,62 +38,94 @@ contra buy & hold e análise de robustez com **50 seeds independentes**.
 </tr>
 <tr>
 <td><b>Retorno total</b></td>
-<td align="center">+12,90%</td>
+<td align="center">+32,63%</td>
 <td align="center">−9,52%</td>
-<td align="center"><b>+22,42pp</b></td>
+<td align="center"><b>+42,15pp</b></td>
 </tr>
 <tr>
 <td><b>Sharpe ratio</b></td>
-<td align="center"><b>0,236</b></td>
+<td align="center"><b>0,557</b></td>
 <td align="center">−0,135</td>
-<td align="center">+0,371</td>
+<td align="center">+0,692</td>
 </tr>
 <tr>
 <td><b>Max drawdown</b></td>
-<td align="center">−20,43%</td>
+<td align="center">−14,92%</td>
 <td align="center">−33,27%</td>
-<td align="center"><b>−12,84pp</b></td>
+<td align="center"><b>−18,35pp</b></td>
 </tr>
 <tr>
-<td><b>Capital final ($1.000 invest.)</b></td>
-<td align="center"><b>$1.206</b></td>
-<td align="center">$922</td>
-<td align="center"><b>+$284</b></td>
+<td><b>Dias operando</b></td>
+<td align="center">97,7%</td>
+<td align="center">100%</td>
+<td align="center">—</td>
 </tr>
 </table>
 
 ### Por ativo
 
-| Ticker | LSTM | Buy & Hold | Alpha | |
-|:------:|:----:|:----------:|:-----:|:---:|
-| **XOM** | −2,44% | +17,59% | −20,03pp | B&H ganhou |
-| **CVX** | +41,13% | +1,20% | +39,93pp | ✅ LSTM ganhou |
-| **SLB** | +38,58% | −25,32% | +63,89pp | ✅ LSTM ganhou |
-| **HAL** | −14,86% | −24,59% | +9,73pp | ✅ LSTM ganhou |
+| Ticker | LSTM | Sharpe LSTM | B&H | Sharpe B&H | MDD LSTM | MDD B&H | Alpha | Dir. Acc. |
+|:------:|:----:|:-----------:|:---:|:----------:|:--------:|:-------:|:-----:|:---------:|
+| **XOM** | +58,69% | 0,821 | +17,59% | 0,248 | −19,92% | −18,92% | +41,10pp | 51,7% |
+| **CVX** | +31,25% | 0,491 | +1,20% | 0,019 | −17,55% | −20,64% | +30,06pp | 50,3% |
+| **SLB** | +49,68% | 0,540 | −25,32% | −0,309 | −32,33% | −46,58% | +75,00pp | 49,1% |
+| **HAL** | −0,74% | −0,009 | −24,59% | −0,269 | −32,11% | −53,56% | +23,84pp | 46,9% |
 
-O modelo opera com threshold dinâmico no percentil `p30` de `|ŷ|` — fica em cash 26–39% dos dias de negociação nos sinais de baixa convicção, reduzindo exposição desnecessária ao mercado.
+O modelo opera com threshold dinâmico no percentil `p30` de `|ŷ|` — fica em cash 22–38% dos dias de negociação nos sinais de baixa convicção, reduzindo exposição desnecessária ao mercado.
+
+> **⚠️ Caveat estatístico importante:** apesar dos retornos financeiros positivos, os testes de significância não confirmam que o alpha é diferente de zero com confiança estatística. O bootstrap IC 95% do Sharpe cruza zero em todos os ativos, e o t-test do alpha não é significativo (p > 0,05 em todos os casos). A acurácia direcional filtrada também não é estatisticamente diferente de 50% pelo teste binomial. **O alpha observado pode ser ruído** e não deve ser interpretado como evidência de capacidade preditiva robusta.
+
+> **O que os resultados não permitem afirmar:** que o modelo é lucrativo após custos reais de transação (não modelados); que o alpha é robusto a regimes adversos, dado que 2020–2022 foi excluído; que o Sharpe de 0,557 é economicamente satisfatório sem significância estatística; e que o resultado se generaliza para outros setores ou ativos.
 
 ---
 
-## Robustez — 50 Seeds Independentes
+## Significância Estatística
 
-O pipeline completo foi retreinado **50 vezes** com inicializações diferentes para verificar que os resultados não dependem de uma semente sortuda.
+Os testes foram realizados sobre o período de teste out-of-sample (2023–2025).
+
+### Bootstrap IC 95% do Sharpe (1.000 amostras) + t-test do alpha
+
+| Ativo | Sharpe | IC 95% inf. | IC 95% sup. | t-test p | Sinal |
+|:-----:|:------:|:-----------:|:-----------:|:--------:|:-----:|
+| **XOM** | +0,821 | −0,310 | +1,977 | 0,163 | ✗ sem sinal |
+| **CVX** | +0,491 | −0,687 | +1,576 | 0,405 | ✗ sem sinal |
+| **SLB** | +0,540 | −0,628 | +1,702 | 0,360 | ✗ sem sinal |
+| **HAL** | −0,009 | −1,193 | +1,154 | 0,988 | ✗ sem sinal |
+
+### Métricas Estatísticas — Qualidade da Previsão
+
+| Ativo | RMSE | MAE | R² | Dir. Acc. | p-valor (binomial) |
+|:-----:|:----:|:---:|:--:|:---------:|:-----------------:|
+| **XOM** | 0,0210 | 0,0163 | −1,18 | 51,7% | 0,451 |
+| **CVX** | 0,0196 | 0,0151 | −0,97 | 50,3% | 0,929 |
+| **SLB** | 0,0260 | 0,0193 | −0,60 | 49,1% | 0,746 |
+| **HAL** | 0,0272 | 0,0201 | −0,41 | 46,9% | 0,206 |
+
+**R² negativo** significa que o modelo performa pior do que prever a média em todos os ativos — ao contrário do esperado, onde 0,01–0,05 seria estado-da-arte (Gu et al., 2020). A **acurácia direcional filtrada** não é estatisticamente diferente de 50% em nenhum ativo (teste binomial bilateral, α = 0,05).
+
+> **Interpretação consolidada:** os retornos financeiros positivos coexistem com ausência de significância estatística. O alpha observado pode decorrer de características específicas do período de teste (recuperação pós-pandemia de SLB/HAL, regime de mercado favorável à estratégia long/short) em vez de capacidade preditiva genuína do modelo.
+
+---
+
+O pipeline completo foi retreinado **50 vezes** com inicializações diferentes para verificar que os resultados não dependem de uma semente sortuda. Métricas coletadas por seed: Sharpe da carteira, capital final, alpha vs. B&H, máximo drawdown.
 
 <div align="center">
 
-### 🏆 LSTM bateu o buy & hold em 45 de 50 runs — 90% de consistência
+### 🏆 LSTM bateu o buy & hold em 88% dos runs (44/50)
 
 </div>
 
 | Métrica | Média | Desvio | Mínimo | Máximo |
 |:--------|------:|-------:|-------:|-------:|
-| Sharpe (carteira) | 0,26 | 0,38 | −0,59 | **1,25** |
-| Alpha vs B&H ($) | +$284 | $242 | −$153 | **+$1.061** |
-| Capital final LSTM | $1.206 | $242 | $769 | **$1.983** |
-| Max drawdown | −0,25 | 0,08 | −0,47 | −0,12 |
+| Sharpe (carteira) | 0,21 | 0,38 | −0,79 | **1,12** |
+| Alpha vs B&H ($) | +$2.628 | $2.325 | −$2.310 | **+$8.658** |
+| Capital final LSTM | $11.850 | $2.325 | $6.912 | **$17.880** |
+| Max drawdown | −0,26 | 0,07 | −0,42 | −0,14 |
 
-> Capital B&H permanece fixo em $922 em todos os runs.  
-> Alpha médio de **+$284** por $1.000 investidos, com desvio padrão de $242.
+> Capital inicial de **$10.000** investidos.  
+> Alpha médio de **+$2.628** por $10.000 investidos, com desvio padrão de $2.325.
+
+A proporção de 88% de runs com alpha > 0 é estimativa empírica — não um teste de hipótese formal. O intervalo de confiança exato depende de suposições distribicionais que não foram verificadas.
 
 ---
 
@@ -103,6 +141,8 @@ A carteira representa uma **cadeia de valor vertical do setor de petróleo**:
 | **HAL** | Halliburton | Serviços de completação | Defasagem de 1–2 trimestres |
 
 **Por que essa combinação?** Quando o WTI sobe, XOM e CVX lucram e aumentam o capex de exploração. Esse investimento chega a SLB e HAL com uma defasagem de 1 a 2 trimestres. A LSTM aprende essa cadeia de causalidade ao treinar os 4 ativos em conjunto — capturando tanto os movimentos comuns quanto as divergências temporais entre as integradas e os prestadores de serviço.
+
+**Nota sobre benchmark:** o período de teste (2023–2025) coincide com recuperação pós-pandemia de SLB e HAL. Uma comparação mais exigente incluiria o ETF setorial XLE ou uma estratégia de momentum — extensão não realizada nesta versão.
 
 ---
 
@@ -120,11 +160,13 @@ O período **2020–2022 foi excluído intencionalmente**. A pandemia criou um r
 
 > **Regra aplicada:** dados nunca são embaralhados. O split é estritamente temporal. O `StandardScaler` é ajustado exclusivamente no treino e aplicado ao teste sem reajuste — qualquer outra abordagem constitui data leakage.
 
+**Limitação reconhecida:** o protocolo atual não possui conjunto de validação independente. O early stopping monitora a loss de **treino**, não de validação — o que reduz sua eficácia como regularizador. Uma partição temporal de validação (ex.: 2017–2019) fortaleceria a análise.
+
 ---
 
 ## Features — 13 Entradas em 5 Grupos Não Redundantes
 
-A seleção foi guiada por três critérios: cobertura de grupos de informação distintos, ausência de correlação acima de `|r| > 0,90` entre pares, e estacionariedade comprovada pelo teste ADF. Todas as features de preço usam log-return em vez de preço bruto.
+A seleção foi guiada por três critérios aplicados **somente sobre o conjunto de treino**: estacionariedade verificada pelo teste ADF (p < 0,05), ausência de correlação acima de `|r| > 0,90` entre pares, e Mutual Information positiva com o target. Todas as features de preço usam log-return em vez de preço bruto.
 
 | Feature | Grupo | Justificativa |
 |:--------|:-----:|:--------------|
@@ -134,6 +176,8 @@ A seleção foi guiada por três critérios: cobertura de grupos de informação
 | `rsi14`, `macd_hist` | Momentum | RSI mede sobrecompra/sobrevenda em escala 0–100. Histograma MACD mede aceleração da tendência. Os dois têm baixa correlação entre si e são complementares |
 | `atr14`, `bb_pct_b` | Volatilidade | ATR normalizado captura o regime de volatilidade, essencial num setor que alterna entre crises e booms. `bb_pct_b` combina tendência e volatilidade numa métrica 0–1 |
 | `wti_logret`, `brent_logret`, `spread_wb`, `ng_logret` | Macro | WTI é o driver causal direto. Brent captura choques geopolíticos que precedem o WTI. O spread WTI–Brent reflete gargalos regionais. Gás natural tem ciclo próprio não sincronizado com o petróleo |
+
+> **Nota metodológica:** a matriz de correlação e a Mutual Information foram calculadas somente no conjunto de treino (2010–2019). Aplicar esses critérios sobre o conjunto completo constituiria data leakage indireto.
 
 <details>
 <summary><b>Features eliminadas por redundância (|r| > 0,90)</b></summary>
@@ -165,7 +209,9 @@ Entrada           LSTM × 2 camadas           Saída
                   dropout = 0.2
 ```
 
-**Por que sem ativação na saída?** Log-returns são valores reais contínuos — podem ser +0,03 ou −0,05. Funções como `sigmoid` ou `tanh` restringiriam a saída a intervalos fixos, impedindo o modelo de prever retornos de maior magnitude. A camada `Linear` pura é a escolha correta para regressão de valores ilimitados.
+**Por que sem ativação na saída?** Log-returns são valores reais contínuos em ℝ — podem ser +0,03 ou −0,05. Funções como `sigmoid` ou `tanh` restringiriam a saída a intervalos fixos, introduzindo viés sistemático em retornos de maior magnitude. A camada `Linear` pura é a escolha correta para regressão de valores ilimitados.
+
+**Por que 2 camadas LSTM?** A hierarquia permite capturar dependências temporais em múltiplas escalas — padrões de curto prazo na camada 1 e relações de prazo mais longo na camada 2.
 
 ### Função de Perda Híbrida
 
@@ -185,7 +231,7 @@ RMSE puro minimiza o erro de previsão mas pode gerar péssimos sinais de tradin
 | Dropout | 0,2 | Regularização nas conexões entre camadas LSTM |
 | Otimizador | Adam, lr = 1e-3 | Padrão para séries financeiras |
 | Scheduler | ReduceLROnPlateau (patience=5, factor=0,5) | Reduz LR quando a loss estagna |
-| Early stopping | patience = 10, máx 100 épocas | Interrompe antes de overfitting |
+| Early stopping | patience = 10, máx 100 épocas | Monitora loss de treino (ver limitação acima) |
 | Gradient clipping | max_norm = 1,0 | Previne gradientes explodindo — problema clássico em LSTMs com séries voláteis |
 | Batch size | 64 | |
 | λ (peso do Sharpe) | 0,3 | |
@@ -204,12 +250,14 @@ Em vez de um valor fixo e arbitrário, cada ativo recebe seu próprio threshold 
 
 | Ativo | Threshold calibrado | Dias operando | Dias em cash |
 |:-----:|:-------------------:|:-------------:|:------------:|
-| XOM | 0,005016 | 73,4% | 26,6% |
-| CVX | 0,005788 | 66,0% | 34,0% |
-| SLB | 0,006711 | 65,6% | 34,4% |
-| HAL | 0,006546 | 61,2% | 38,8% |
+| XOM | 0,004235 | 77,9% | 22,1% |
+| CVX | 0,005586 | 69,3% | 30,7% |
+| SLB | 0,006439 | 63,6% | 36,4% |
+| HAL | 0,006601 | 62,0% | 38,0% |
 
 O percentil p30 foi selecionado por maximização do Sharpe na distribuição de treino e aplicado **sem reajuste** no teste. Percentis abaixo de p30 colapsam para thresholds numericamente insignificantes porque a distribuição de `|ŷ|` é muito concentrada em torno de zero.
+
+> **Risco de data snooping:** a seleção do percentil ótimo no treino introduz um grau de otimização nos hiperparâmetros da estratégia. Um procedimento mais conservador realizaria essa seleção em um conjunto de validação independente.
 
 ---
 
@@ -221,14 +269,16 @@ O percentil p30 foi selecionado por maximização do Sharpe na distribuição de
 |:--------|:-------:|:--------------|
 | RMSE | `√mean((ŷ − y)²)` | Penaliza erros grandes mais que pequenos |
 | MAE | `mean(\|ŷ − y\|)` | Complementa o RMSE — menos sensível a outliers |
-| R² | `1 − SS_res / SS_tot` | Em finanças, R² de 0,02–0,05 já é relevante |
-| Acurácia direcional | `mean(sign(ŷ) == sign(y))` | Acima de 52–53% é economicamente significativo |
+| R² | `1 − SS_res / SS_tot` | **0,01–0,05 é estado-da-arte** em previsão de retornos (Gu et al., 2020) |
+| Acurácia direcional | `mean(sign(ŷ) == sign(y))` | Acima de ~52% é economicamente significativo |
+
+R² baixo é esperado e não invalida o modelo: em finanças, até R² de 1–5% pode ser explorado comercialmente. O que importa é se o sinal direcional é suficientemente consistente para gerar alpha após custos.
 
 ### Financeiras — qualidade do sinal de trading
 
 | Métrica | Interpretação |
 |:--------|:--------------|
-| Sharpe anualizado | `(mean(r) / std(r)) × √252`. Sharpe > 1,0 é bom |
+| Sharpe anualizado | `(mean(r) / std(r)) × √252`. Sharpe > 1,0 é referência na literatura |
 | Máximo drawdown | Maior queda acumulada desde o pico até o vale |
 | Alpha vs B&H | Diferença de retorno total entre LSTM e buy & hold simples |
 
@@ -237,7 +287,7 @@ O percentil p30 foi selecionado por maximização do Sharpe na distribuição de
 ## Stack
 
 ```bash
-pip install torch yfinance pandas-ta scikit-learn seaborn matplotlib
+pip install torch yfinance pandas-ta scikit-learn seaborn matplotlib scipy statsmodels
 ```
 
 | Biblioteca | Versão | Uso |
@@ -245,7 +295,9 @@ pip install torch yfinance pandas-ta scikit-learn seaborn matplotlib
 | `torch` | ≥ 2.0 | Definição da LSTM, loop de treino, loss híbrida |
 | `yfinance` | ≥ 0.2 | Download de preços históricos e futuros (WTI, Brent, gás natural) |
 | `pandas-ta` | any | Indicadores técnicos. O helper `get_col(df, prefix)` detecta nomes de colunas automaticamente — evita `KeyError` por diferenças de versão |
-| `scikit-learn` | ≥ 1.3 | `StandardScaler`, `mean_squared_error`, `r2_score` |
+| `scikit-learn` | ≥ 1.3 | `StandardScaler`, `mean_squared_error`, `r2_score`, `mutual_info_regression` |
+| `statsmodels` | any | Teste ADF (Augmented Dickey-Fuller) para verificação de estacionariedade |
+| `scipy.stats` | any | Correlação de Pearson e análise de distribuições |
 | `matplotlib` / `seaborn` | — | Curvas de capital, scatter de previsões, heatmaps |
 
 ---
@@ -254,17 +306,20 @@ pip install torch yfinance pandas-ta scikit-learn seaborn matplotlib
 
 ### [`exploratory_analysis.ipynb`](exploratory_analysis.ipynb)
 
-Justificativa empírica de todas as decisões de feature engineering. Nenhuma feature foi escolhida sem evidência quantitativa.
+Etapa de pré-modelagem: justificativa empírica de todas as decisões de feature engineering. Nenhuma feature foi incluída sem evidência quantitativa.
 
-| Análise | O que prova |
-|:--------|:-----------|
-| **Teste ADF** | Log-return é estacionário (p < 0,05); preço bruto não é — justifica a transformação |
-| **Correlação — candidatas** | Identifica todos os pares com \|r\| > 0,90, revelando as redundâncias a eliminar |
-| **Correlação — selecionadas** | Confirma ausência de redundância no conjunto final de 13 features |
-| **Mutual Information** | Mede o poder preditivo não-linear de cada feature sobre o retorno do dia seguinte |
-| **Correlação cruzada** | Justifica a arquitetura multivariada: 4 ativos correlacionados mas com divergências temporais exploráveis |
+| Seção | Análise | O que prova |
+|:-----:|:--------|:-----------|
+| 3 | **Teste ADF** | Log-return é estacionário (p < 0,05); preço bruto não é — justifica a transformação |
+| 4 | **Cálculo de features com `pandas-ta`** | Organização em 5 grupos funcionais; todos os indicadores calculados sobre o período de treino |
+| 5 | **Correlação — candidatas** | Identifica todos os pares com \|r\| > 0,90, revelando as redundâncias a eliminar |
+| 5 | **Correlação — selecionadas** | Confirma ausência de redundância no conjunto final de 13 features |
+| 6 | **Mutual Information** | Mede o poder preditivo não-linear de cada feature sobre o retorno do dia seguinte |
+| 7 | **Correlação cruzada** | Justifica a arquitetura multivariada: 4 ativos correlacionados mas com divergências temporais exploráveis |
+| 8 | **Distribuição das features** | Identifica caudas pesadas e assimetrias que podem impactar o treinamento |
+| 9 | **Conclusão** | Consolidação das 13 features com justificativa por critério |
 
-### [`energy_lstm.ipynb`](energy_lstm.ipynb)
+### [`energy-lstm.ipynb`](energy-lstm.ipynb)
 
 Pipeline completo de ponta a ponta:
 
@@ -302,7 +357,7 @@ Para reproduzir os resultados com `seed=42`:
 
 ```bash
 jupyter nbconvert --to notebook --execute exploratory_analysis.ipynb --output exploratory_analysis_executed.ipynb
-jupyter nbconvert --to notebook --execute energy_lstm.ipynb --output energy_lstm_executed.ipynb
+jupyter nbconvert --to notebook --execute energy-lstm.ipynb --output energy-lstm_executed.ipynb
 ```
 
 ---
@@ -313,18 +368,23 @@ jupyter nbconvert --to notebook --execute energy_lstm.ipynb --output energy_lstm
 |:----------|:--------|
 | **Custos de transação não modelados** | Bid-ask spread (~0,05%) e comissões reduziriam o alpha realizado. Uma estratégia ativa diária acumula custos relevantes |
 | **Short selling sem custo de aluguel** | A estratégia assume posições vendidas sem modelar o custo de aluguel de ações |
+| **Sem conjunto de validação independente** | Early stopping monitora loss de treino; ausência de validação reduz sua eficácia como regularizador |
+| **Risco de data snooping no threshold** | A seleção do percentil ótimo no treino introduz grau de otimização; validação independente seria mais conservadora |
 | **XOM com alpha negativo** | Hipótese: crack spread (margem de refino) é um driver relevante para integradas e não está incluído como feature |
 | **Período de teste** | 2023–2025 coincide com recuperação pós-pandemia de SLB/HAL — walk-forward em múltiplos períodos fortaleceria a análise |
+| **Benchmark simples** | Buy & hold puro sem comparação com XLE ou estratégias de momentum de referência |
 
 ---
 
 ## Trabalho Futuro
 
 - [ ] Adicionar **crack spread** (WTI − gasolina) como feature macro para as integradas
+- [ ] Incorporar **conjunto de validação independente** (ex.: 2017–2019) para early stopping rigoroso
 - [ ] Incorporar **sentiment de notícias** via NLP em headlines do setor de energia
 - [ ] Comparar com arquiteturas **Temporal Fusion Transformer (TFT)** e **N-BEATS**
 - [ ] Implementar **walk-forward validation** com janelas deslizantes de treino/teste
 - [ ] Modelar **custos de transação** explicitamente na função de perda e na simulação
+- [ ] Comparar com benchmark setorial **XLE** e estratégias de momentum simples
 
 ---
 
@@ -332,5 +392,6 @@ jupyter nbconvert --to notebook --execute energy_lstm.ipynb --output energy_lstm
 
 - Hochreiter, S. & Schmidhuber, J. (1997). *Long Short-Term Memory*. Neural Computation, 9(8), 1735–1780.
 - Fischer, T. & Krauss, C. (2018). *Deep learning with long short-term memory networks for financial market predictions*. European Journal of Operational Research, 270(2), 654–669.
+- Gu, S., Kelly, B. & Xiu, D. (2020). *Empirical Asset Pricing via Machine Learning*. Review of Financial Studies, 33(5), 2223–2273.
 - Murphy, J. J. (1999). *Technical Analysis of the Financial Markets*. New York Institute of Finance.
 - de Prado, M. L. (2018). *Advances in Financial Machine Learning*. Wiley.
